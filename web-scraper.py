@@ -1,9 +1,17 @@
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
 import matplotlib
 import lxml
 import csv
+
+class HomeListing:
+    def __init__(self, address, price, sqft, bd, ba):
+        self.address = address
+        self.price = price
+        self.sqft = sqft
+        self.bd = bd
+        self.ba = ba
+
 
 base_url = "https://www.zillow.com/homes/for_sale/{city}/{page}_p/"
 
@@ -35,30 +43,41 @@ for page in range(start_page, end_page + 1):
         html_doc = BeautifulSoup(html_content, "lxml")
         print(f"{html_doc.prettify()}\n")
 
-        home_listings = html_doc.find_all("li", class_="ListItem-c11n-8-102-0__sc-13rwu5a-0 StyledListCardWrapper-srp-8-102-0__sc-wtsrtn-0 hKdzLV kgwlbT")
+        listing_container = html_doc.find_all("li", class_="ListItem-c11n-8-102-0__sc-13rwu5a-0 StyledListCardWrapper-srp-8-102-0__sc-wtsrtn-0 hKdzLV kgwlbT")
 
-        for home in home_listings:
+        home_listings = []
+
+        for home in listing_container:
             address_tag = home.find('address')
-            address = address_tag.text.strip() if address_tag else "N/A"
-
             price_tag = home.find('span', {'data-test': 'property-card-price'})
-            price = price_tag.text.strip() if price_tag else "N/A"
 
             details = home.find('ul', {'class': 'StyledPropertyCardHomeDetailsList-c11n-8-102-0__sc-1j0som5-0 exCsDV'})
-            
-            if details:
-                li_elements = details.find_all('li')
-                bedrooms = li_elements[0].text.strip().split()[0] if len(li_elements) > 0 else "N/A"
-                bathrooms = li_elements[1].text.strip().split()[0] if len(li_elements) > 1 else "N/A"
-                square_feet = li_elements[2].text.strip().split()[0] if len(li_elements) > 2 else "N/A"
-            else:
-                bedrooms = bathrooms = square_feet = "N/A"
 
-            print(f"Address: {address}")
-            print(f"Price: {price}")
-            print(f"Sqft: {square_feet}")
-            print(f"Bd: {bedrooms}")
-            print(f"Ba: {bathrooms}")
-            print("\n")
-                            
-    print("\n--------------------------\n")
+            if address_tag and price_tag:
+                address = address_tag.text.strip()
+                price = price_tag.text.strip()
+
+                if details:
+                    li_elements = details.find_all('li')
+
+                    if len(li_elements) == 3:
+                        bedrooms = li_elements[0].text.strip().split()[0]
+                        bathrooms = li_elements[1].text.strip().split()[0]
+                        square_feet = li_elements[2].text.strip().split()[0]
+
+                        home_listing = HomeListing(address, price, square_feet, bedrooms, bathrooms)
+                        home_listings.append(home_listing)
+
+        with open("home_listings.csv", "w") as csv_file:
+            fieldnames = ["Address", "Price", "Square Feet", "Bedrooms", "Bathrooms"]
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer.writeheader()
+            for listing in home_listings:
+                writer.writerow({
+                    "Address": listing.address, 
+                    "Price": listing.price, 
+                    "Square Feet": listing.sqft, 
+                    "Bedrooms": listing.bd, 
+                    "Bathrooms": listing.ba
+                })
+
