@@ -117,6 +117,7 @@ def scrape_data()-> list[HomeListing]:
                             home_listing = HomeListing(address, price[2:], 
                                                        square_feet, bedrooms, bathrooms)
                             
+                            """
                             # Prints each home listing and its attributes to the terminal.
                             print(f"Address: {home_listing.address}")
                             print(f"Price: {home_listing.price}")
@@ -124,7 +125,8 @@ def scrape_data()-> list[HomeListing]:
                             print(f"Bd: {home_listing.bd}")
                             print(f"Ba: {home_listing.ba}")
                             print("\n")
-
+                            """
+                            
                             home_listings.append(home_listing)
 
     return home_listings
@@ -169,15 +171,15 @@ def plot_data(filename: str)-> None:
         reader = csv.DictReader(csv_file)
         for row in reader:
             home_listings.append(HomeListing(
-                row["Address"], row["Price"], row["Square Feet"], 
+                row["Address"], row["Price"].replace("$", ""), row["Square Feet"], 
                 row["Bedrooms"], row["Bathrooms"]
             ))
 
-        # Removes items from the list with empty sqft data.
-        for listing in home_listings:
-            if listing.sqft == "--":
-                home_listings.remove(listing)
+    # Removes items in the list with empty sqft data.
+    home_listings = [listing for listing in home_listings if "--" not in listing.sqft]
 
+    for listing in home_listings:
+        print(listing.sqft)
     # Creates lists for each of the data points in the scatterplot.
     sqft_dataset = [int((listing.sqft).replace(",", "")) for listing 
                     in home_listings]
@@ -186,8 +188,8 @@ def plot_data(filename: str)-> None:
 
     plt.scatter(sqft_dataset, price_dataset, s=10)
 
-    plt.xlim(0, 10000)
-    plt.ylim(0, 10000000)
+    plt.xlim(0, 6000)
+    plt.ylim(0, 4000000)
 
     plt.gca().yaxis.set_major_formatter(tkr.FuncFormatter(lambda x, _: f"${x:,.0f}"))
 
