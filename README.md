@@ -21,7 +21,7 @@ To create a scatterplot comparing prices of home listings by square feet, run th
 ```
 python zillow-scraper plot
 ```
-This will open up a plot in matplotlib. 
+This will open up a scatterplot in matplotlib. 
 
 ## Authors
 Daniel Ahn
